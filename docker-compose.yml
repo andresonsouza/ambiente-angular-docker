@@ -1,0 +1,65 @@
+version: "3.3"
+
+services:
+
+  build-angular:
+    build: .
+    ports:
+      - "42000:4200"
+    volumes:
+      - "/app/node_modules"
+      - ".:/app"
+    networks:
+      - database-network
+
+  postgres:
+    image: postgres:11
+    restart: always
+    volumes:
+      - ./docker/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - database-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@pgadmin.com.br"
+      PGADMIN_DEFAULT_PASSWORD: "pgadmin2020"
+    ports:
+      - 8888:80
+    depends_on:
+      - postgres
+    networks:
+      - database-network
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql
+      - MYSQL_DATABASE=app_development
+    networks:
+      - database-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    links:
+        - "mysql"
+    ports:
+      - 9999:80
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - database-network
+
+networks:
+  database-network:
+    driver: bridge
